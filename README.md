@@ -1,1 +1,1 @@
-# step-count
+Step counting algorithm.
