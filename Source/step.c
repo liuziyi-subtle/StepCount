@@ -322,14 +322,13 @@ static bool _find_peaks(const float *array, int32_t i, int16_t radius, int32_t m
 
 uint8_t Step_Detection(const int16_t acc[3])
 {
-    // printf("C: accx: %d, accy: %d, accz: %d\n", acc[0], acc[1], acc[2]);
+    /* TODO: move to firmware. */
     int16_t accx = (acc[0] >> 6) >> 0;
     int16_t accy = (acc[1] >> 6) >> 0;
     int16_t accz = (acc[2] >> 6) >> 0;
 
-    // printf("accx: %d, accy: %d, accz: %d", accx, accy, accz);
-
-    // Load the last 6-bit to get the sync signal.
+    /* Load the last 6-bit to get the sync signal. */
+    /* Q: the meaning of sync_exist? */
     bool sync_exist = false;
     if ( ((acc[0] & 0x3F) >= 1)
         && ((acc[0] & 0x3F) <= 25)
@@ -339,7 +338,6 @@ uint8_t Step_Detection(const int16_t acc[3])
         sync_exist = true;
         nfill = (acc[0] & 0x3F) - 1;
     }
-    // printf("%d, %d, %d\n", acc[0], nfill, sync_exist);
 
     x_buf[nfill] = accx;
     y_buf[nfill] = accy;
@@ -424,6 +422,11 @@ uint8_t Step_Detection(const int16_t acc[3])
             // Check consecutive walking or non-walking
             if (!is_walking)
             {
+                /* If Zhang has detected multiple is_walking=false, he may want
+                 * to know whether my model has the same results. If different,
+                 * consecutive_walk_counter that control counting decision would
+                 * depend on my model.
+                 */
                 if (!not_walk_model)
                 {
                     consecutive_walk_counter++;
@@ -444,12 +447,16 @@ uint8_t Step_Detection(const int16_t acc[3])
                 {
                     consecutive_stop_counter = 0;
                 }
+                /* Q: if both the last and current is_walking are
+                 * true, consecutive_walk_counter changes to 0? */
                 consecutive_walk_counter = 0;
             }
 
+            /* Update mag_8s_buffer. */
             memcpy(mag_8s_buffer, &mag_8s_buffer[DATA_BLOCK], 7 * DATA_BLOCK * sizeof(mag_8s_buffer[0]));
             memcpy(&mag_8s_buffer[7 * DATA_BLOCK], acc_sqsm_flt, DATA_BLOCK * sizeof(mag_8s_buffer[0]));
 
+            /* Update acc_2s_buffer. */
             for (int axis = 0; axis < AXIS_NUM; axis++)
             {
                 memcpy(acc_2s_buffer[axis], &acc_2s_buffer[axis][DATA_BLOCK], DATA_BLOCK * sizeof(acc_2s_buffer[axis][0]));
@@ -482,13 +489,15 @@ uint8_t Step_Detection(const int16_t acc[3])
             memset(acc_ramp, 0, sizeof(acc_ramp));
             memset(acc_famp, 0, sizeof(acc_famp));
 
-            // Magnitude: Scan the buffer to detect peaks and valleys
-            for (int i = 4; i < DATA_BLOCK + 4; i++)
+            /* Magnitude: Scan the buffer to detect peaks and valleys. */
+            for (int i = 4; i < DATA_BLOCK + 4; i++) /* Q: Because the radius for detecting peak is 4? */
             {
                 float mag_peak_value = mag_8s_buffer[i + 6 * DATA_BLOCK];
+                /* Continuously assign the min value to mag_valley_value. */
                 if (mag_valley_value > mag_peak_value)
                 {
                     mag_valley_value = mag_peak_value;
+                    /*<< Q: (step_counter - 50) means start of all the index is from 2s? */
                     mag_valley_index = (step_counter - 50) + i + 1;
                     if (mag_valley_index < 0)
                     {
@@ -505,7 +514,11 @@ uint8_t Step_Detection(const int16_t acc[3])
                     {
                         if (mag_candpv.npv > 0)
                         {
-                            if (mag_peak_value - mag_valley_value < 250 || (mag_peak_index - mag_candpv.pv[mag_candpv.npv - 1].pos <= 7 && mag_peak_value - mag_valley_value < 500))
+                            /* If speed is not high, gap between peak and valley
+                             * values must >= 250. If high (peak and valley pos-
+                             * -itions <=7), gap must >= 500.
+                             */
+                            if (mag_peak_value - mag_valley_value < 250 || (mag_peak_index - mag_candpv.pv[mag_candpv.npv - 1].pos <= 7 && mag_peak_value - mag_valley_value < 500)) /* Q: Noise peak ? */
                             {
                                 continue;
                             }
@@ -533,6 +546,8 @@ uint8_t Step_Detection(const int16_t acc[3])
                         mag_candpv.npv += 2;
 
                     }
+
+                    /* Reset valley to search new peak and valley pair. */
                     mag_valley_value = FLT_MAX;
                 }
             }
@@ -543,6 +558,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                 for (int i = 4; i < DATA_BLOCK + 4; i++)
                 {
                     float acc_peak_value = acc_2s_buffer[axis][i];
+                    /* Continuously assign the min value to acc_valley_value[axis]. */
                     if (acc_valley_value[axis] > acc_peak_value)
                     {
                         acc_valley_value[axis] = acc_peak_value;
