@@ -136,14 +136,14 @@ def annotate_record(manual_info):
 
 
 RECORD_MOVE_DIR = \
-    '/Users/liuziyi/Documents/Lifesense/data/step-count/results-new-new/records'
+    '/Users/liuziyi/Documents/Lifesense/Data/StepCount/results-new-new-new/records'
 ANNOTATION_SAVE_DIR = \
-    '/Users/liuziyi/Documents/Lifesense/data/step-count/results-new-new/jsons'
-with open('/Users/liuziyi/Documents/Lifesense/data/step-count/raw/value_descriptions.json') as f:
+    '/Users/liuziyi/Documents/Lifesense/Data/StepCount/results-new-new-new/jsons'
+with open('/Users/liuziyi/Documents/Lifesense/Data/StepCount/raw/value_descriptions.json') as f:
     VALUE_DESCRIPTIONS = json.load(f)
 
 record_paths = glob(
-    '/Users/liuziyi/Documents/Lifesense/data/step-count/raw/augmented/20200530/**/*.csv', recursive=True)
+    '/Users/liuziyi/Documents/Lifesense/Data/StepCount/raw/augmented/20210420/**/*.csv', recursive=True)
 record_paths.sort()
 print(len(record_paths))
 
@@ -157,7 +157,7 @@ for rp in record_paths:
     #     continue
     manual_info = {
         'file_name': rp.split('/')[-1],
-        'creation_date': '2020/5/31'
+        'creation_date': '2021/4/20'
     }
 
     print(rp)

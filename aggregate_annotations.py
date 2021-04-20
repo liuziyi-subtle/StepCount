@@ -26,11 +26,11 @@ def rename_segment_id(segment_annotation):
 if __name__ == '__main__':
     '''
     usage:
-    python3 aggregate_annotations.py --json_dir /Users/liuziyi/Documents/Lifesense/data/step-count/results/jsons \
+    python3 aggregate_annotations.py --json_dir /Users/liuziyi/Documents/Lifesense/Data/StepCount/results/jsons \
                                      --record_field record \
                                      --segment_field segment \
-                                     --value_description_path /Users/liuziyi/Documents/Lifesense/data/step-count/raw/value_descriptions.json \
-                                     --save_path /Users/liuziyi/Documents/Lifesense/data/step-count/results/annotations.json
+                                     --value_description_path /Users/liuziyi/Documents/Lifesense/Data/StepCount/raw/value_descriptions.json \
+                                     --save_path /Users/liuziyi/Documents/Lifesense/Data/StepCount/results/annotations.json
     '''
     import argparse
     import os
