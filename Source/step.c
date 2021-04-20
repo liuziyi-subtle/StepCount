@@ -322,13 +322,13 @@ static bool _find_peaks(const float *array, int32_t i, int16_t radius, int32_t m
 
 uint8_t Step_Detection(const int16_t acc[3])
 {
-    /* TODO: move to firmware. */
+    /* TODO: Move to firmware. */
     int16_t accx = (acc[0] >> 6) >> 0;
     int16_t accy = (acc[1] >> 6) >> 0;
     int16_t accz = (acc[2] >> 6) >> 0;
 
     /* Load the last 6-bit to get the sync signal. */
-    /* Q: the meaning of sync_exist? */
+    /* Q: Meaning of sync_exist? If sync_exist = true, it cannot proceed to count steps. */
     bool sync_exist = false;
     if ( ((acc[0] & 0x3F) >= 1)
         && ((acc[0] & 0x3F) <= 25)
@@ -362,6 +362,7 @@ uint8_t Step_Detection(const int16_t acc[3])
     float activity = 0;
     if (nfill == DATA_BLOCK - sync_exist)
     {
+        printf("================================================================sync_exist: %d\n", sync_exist);
         // float activity_3axis[AXIS_NUM];
         // memset(activity_3axis, 0, sizeof(activity_3axis));
 
@@ -417,7 +418,7 @@ uint8_t Step_Detection(const int16_t acc[3])
 
             // Get
             bool not_walk_model = NonWalkCheck(x_buf, y_buf, z_buf, DATA_BLOCK, true, false);
-            printf("not_walk_model: %d\n", not_walk_model);
+            // printf("not_walk_model: %d\n", not_walk_model);
 
             // Check consecutive walking or non-walking
             if (!is_walking)
@@ -614,6 +615,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                     float z_min = acc_dat_flt[DATA_BLOCK * 2];
                     float z_max = acc_dat_flt[DATA_BLOCK * 2];
 
+                    /* Get min and max on three axes. */
                     for (int32_t i = 1; i < DATA_BLOCK; i++)
                     {
                         // X
@@ -650,6 +652,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                         }
                     }
 
+                    /* Get average on three axes. */
                     float x_avg = 0;
                     float y_avg = 0;
                     float z_avg = 0;
@@ -670,6 +673,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                                 k = j;
                             }
                         }
+                        /* Remove the first k candpv. */
                         if (k >= 0)
                         {
                             for (int j = 0; j < mag_candpv.npv - k - 1; j++)
@@ -712,6 +716,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                                 }
                             }
 
+                            /* Do not continue if < 9 steps. */
                             if (n_peak < 9)
                             {
                                 break;
@@ -725,6 +730,10 @@ uint8_t Step_Detection(const int16_t acc[3])
                                 _calc_rftamp(acc_candpv[axis].pv[0], acc_candpv[axis], acc_rt[axis], acc_ramp[axis], &acc_nr[axis], acc_ft[axis], acc_famp[axis], &acc_nf[axis]);
                             }
 
+                            /* Q: Since some short silence time (may < SILENCE_TH),
+                             * the consecutive [V, V] may still in mag_candpv. But why
+                             * drop the first 2 ?
+                             */
                             if (mag_nr < ((STARTUPPVNUM >> 1) - 1) || mag_nf < ((STARTUPPVNUM >> 1) - 1))
                             {
                                 for (int i = 0; i < mag_candpv.npv - 2; i++)
@@ -770,7 +779,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                                 // Otherwise, rotating arms may contribute to steps.
                                 bool x_shake = false;
 
-                                // X should be greater than 1/8 G while walking
+                                // X should be greater than 1/8 G (8 / 64) while walking
                                 if (x_max - x_min > 8)
                                 {
                                     x_shake = true;
@@ -792,6 +801,7 @@ uint8_t Step_Detection(const int16_t acc[3])
 #else
                                     ramp_std = sqrtf(ramp_var);
 #endif
+                                    /* Coefficient of variation. */
                                     float cv_ramp = ramp_std / mag_ramp_mean;
                                     if (!walk_rule4 && cv_ramp < 0.79f)// && tf7)
                                     {
@@ -891,16 +901,15 @@ uint8_t Step_Detection(const int16_t acc[3])
                                     mag_candpv.npv = mag_candpv.npv - 2;
                                 }
                             }
-                        }
+                        }  /* while (mag_candpv.npv >= STARTUPPVNUM) */
 
                         avg_rtime = MIN_P2V_TIME;
                         avg_ftime = MIN_P2V_TIME;
                         avg_ramp = MIN_P2V_AMP;
                         avg_famp = MIN_P2V_AMP;
-                    }
-                    else
+                    }  /* if (!is_walking) */
+                    else  /* Walking. */
                     {
-                        // Walking
                         mag_nr = mag_nf = 0;
                         _calc_rftamp(lastpv.pv, mag_candpv, mag_rt, mag_ramp, &mag_nr, mag_ft, mag_famp, &mag_nf);
                         for (int axis = 0; axis < AXIS_NUM; axis++)
@@ -1123,7 +1132,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                             }
                         }
                     }
-                }
+                }  /* if (mag_candpv.npv > 0) */
                 else if (is_walking)
                 {
                     if (step_counter - tick_index == FS)
@@ -1143,7 +1152,7 @@ uint8_t Step_Detection(const int16_t acc[3])
                         tick = 0;
                     }
                 }
-            }
+            }  /* if (step_counter >= 2 * FS) */
         }
 
         /* update lastpv and mag_candpv */
