@@ -3,10 +3,11 @@ import pandas as pd
 import c2py
 from glob import glob
 
-manual_infos = pd.read_csv("/Users/liuziyi/manual_infos_435.csv")
-file_paths = glob("/Users/liuziyi/计步数据采集/435/dat/decrypt_files/*.dat")
+# manual_infos = pd.read_csv("/Users/liuziyi/manual_infos_435.csv")
+file_paths = glob(
+    "/Users/liuziyi/Documents/Lifesense/Data/StepCount/results-new-new-new/records/*.csv")
 for fp in file_paths:
-    if fp.split("/")[-1] != "心率-A01_日常_静坐-余嘉敏-手_4-20210317102214-EFB848AD0923.dat":
+    if "余嘉敏" not in fp.split("/")[-1]:
         continue
 
     record = pd.read_csv(fp,
@@ -32,6 +33,6 @@ for fp in file_paths:
         step = c2py.Step_Detection(tuple(acc))
         steps += step
 
-    manual_info = manual_infos.loc[manual_infos["file_name"] == fp.split(
-        "/")[-1].split(".dat")[0], ["手环步数", "计步器步数"]]
-    print(fp.split("/")[-1], ": ", steps, manual_info.values)
+    # manual_info = manual_infos.loc[manual_infos["file_name"] == fp.split(
+        # "/")[-1].split(".dat")[0], ["手环步数", "计步器步数"]]
+    print(fp.split("/")[-1], ": ", steps)

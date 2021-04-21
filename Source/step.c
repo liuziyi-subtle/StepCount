@@ -362,7 +362,6 @@ uint8_t Step_Detection(const int16_t acc[3])
     float activity = 0;
     if (nfill == DATA_BLOCK - sync_exist)
     {
-        printf("================================================================sync_exist: %d\n", sync_exist);
         // float activity_3axis[AXIS_NUM];
         // memset(activity_3axis, 0, sizeof(activity_3axis));
 

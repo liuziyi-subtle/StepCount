@@ -332,7 +332,7 @@ uint8_t NonWalkCheck(const int16_t* accx, const int16_t* accy, const int16_t* ac
   if (proba > 0.7f) {
     check_result = 1u;
   }
-  printf("---------> proba: %f\n", proba);
+  printf("---------> %u -- proba: %f\n", k_counter, proba);
 
   /* noise if k_counter < 5 seconds after initialization. */
   if (k_counter < 5u) {
